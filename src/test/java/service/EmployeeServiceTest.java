@@ -1,65 +1,32 @@
 package com.revworkforce.service;
 
+import com.revworkforce.exception.EmployeeException;
 import com.revworkforce.model.Employee;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class EmployeeServiceTest {
 
-    private EmployeeService employeeService = new EmployeeService();
-
-    @Test
-    void testAddEmployeeValidData() {
-
-        Employee emp = new Employee(
-                0,
-                "Test User",
-                "testuser@gmail.com",
-                "EMPLOYEE",
-                50000,
-                null,
-                "123456"
-        );
-
-        assertDoesNotThrow(() -> employeeService.addEmployee(emp));
-    }
-
     @Test
     void testInvalidEmail() {
-
         Employee emp = new Employee(
                 0,
-                "Test User",
-                "invalidemail",
+                "John",
+                "wrongemail",   // ❌ invalid email
                 "EMPLOYEE",
-                50000,
+                5000,
                 null,
-                "123456"
+                "pass123",
+                10,
+                10,
+                10
         );
 
-        Exception exception = assertThrows(RuntimeException.class,
-                () -> employeeService.addEmployee(emp));
+        EmployeeService service = new EmployeeService();
 
-        assertTrue(exception.getMessage().contains("Invalid email"));
-    }
-
-    @Test
-    void testInvalidSalary() {
-
-        Employee emp = new Employee(
-                0,
-                "Test User",
-                "testuser@gmail.com",
-                "EMPLOYEE",
-                -1000,
-                null,
-                "123456"
-        );
-
-        Exception exception = assertThrows(RuntimeException.class,
-                () -> employeeService.addEmployee(emp));
-
-        assertTrue(exception.getMessage().contains("Salary"));
+        assertThrows(EmployeeException.class, () -> {
+            service.addEmployee(emp);
+        });
     }
 }

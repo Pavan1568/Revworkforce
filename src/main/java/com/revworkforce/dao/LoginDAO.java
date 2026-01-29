@@ -22,14 +22,21 @@ public class LoginDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
+
                 return new Employee(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("email"),
                         rs.getString("role"),
                         rs.getDouble("salary"),
-                        rs.getObject("manager_id", Integer.class),
-                        rs.getString("password")
+                        rs.getObject("manager_id") != null ? rs.getInt("manager_id") : null,
+                        rs.getString("password"),
+                        rs.getInt("casual_leave"),
+                        rs.getInt("sick_leave"),
+                        rs.getInt("paid_leave"),
+                        rs.getString("phone"),
+                        rs.getString("address"),
+                        rs.getString("emergency_contact")
                 );
             }
 
