@@ -6,17 +6,21 @@ import com.revworkforce.util.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.temporal.ChronoUnit;
 
 public class LeaveDAO {
 
-    // ================= APPLY LEAVE =================
+    private final EmployeeDAO employeeDAO = new EmployeeDAO();
+
+    /* ================= APPLY LEAVE ================= */
     public void applyLeave(LeaveRequest leave) {
 
-        String sql = "INSERT INTO leave_request(employee_id, leave_type, start_date, end_date, reason, status) " +
+        String insertSql = "INSERT INTO leave_request " +
+                "(employee_id, leave_type, start_date, end_date, reason, status) " +
                 "VALUES (?, ?, ?, ?, ?, 'PENDING')";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(insertSql)) {
 
             ps.setInt(1, leave.getEmployeeId());
             ps.setString(2, leave.getLeaveType());
@@ -25,14 +29,27 @@ public class LeaveDAO {
             ps.setString(5, leave.getReason());
 
             ps.executeUpdate();
-            System.out.println("✅ Leave applied successfully!");
+
+            // ✅ AUTO LEAVE BALANCE DEDUCTION
+            long days = ChronoUnit.DAYS.between(
+                    leave.getStartDate().toLocalDate(),
+                    leave.getEndDate().toLocalDate()
+            ) + 1;
+
+            employeeDAO.deductLeaveBalance(
+                    leave.getEmployeeId(),
+                    leave.getLeaveType(),
+                    (int) days
+            );
+
+            System.out.println("✅ Leave applied and balance updated!");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ================= VIEW ALL LEAVES (Manager/Admin) =================
+    /* ================= VIEW ALL LEAVES (MANAGER / ADMIN) ================= */
     public void viewAllLeaves() {
 
         String sql = "SELECT * FROM leave_request";
@@ -41,12 +58,12 @@ public class LeaveDAO {
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            System.out.println("\n===== ALL LEAVE REQUESTS =====");
+            System.out.println("\n===== LEAVE REQUESTS =====");
 
             while (rs.next()) {
                 System.out.println(
-                        "LeaveID: " + rs.getInt("id") +
-                                " | EmpID: " + rs.getInt("employee_id") +
+                        "Leave ID: " + rs.getInt("id") +
+                                " | Emp ID: " + rs.getInt("employee_id") +
                                 " | Type: " + rs.getString("leave_type") +
                                 " | Status: " + rs.getString("status") +
                                 " | Comment: " + rs.getString("manager_comment")
@@ -58,10 +75,10 @@ public class LeaveDAO {
         }
     }
 
-    // ================= VIEW MY LEAVES (Employee) =================
+    /* ================= VIEW EMPLOYEE LEAVES ================= */
     public void viewMyLeaves(int employeeId) {
 
-        String sql = "SELECT * FROM leave_request WHERE employee_id = ?";
+        String sql = "SELECT * FROM leave_request WHERE employee_id=?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -69,14 +86,12 @@ public class LeaveDAO {
             ps.setInt(1, employeeId);
             ResultSet rs = ps.executeQuery();
 
-            System.out.println("\n===== MY LEAVE HISTORY =====");
+            System.out.println("\n===== MY LEAVES =====");
 
             while (rs.next()) {
                 System.out.println(
-                        "LeaveID: " + rs.getInt("id") +
+                        "Leave ID: " + rs.getInt("id") +
                                 " | Type: " + rs.getString("leave_type") +
-                                " | Start: " + rs.getDate("start_date") +
-                                " | End: " + rs.getDate("end_date") +
                                 " | Status: " + rs.getString("status")
                 );
             }
@@ -86,10 +101,11 @@ public class LeaveDAO {
         }
     }
 
-    // ================= CANCEL LEAVE =================
+    /* ================= CANCEL LEAVE ================= */
     public void cancelLeave(int leaveId, int employeeId) {
 
-        String sql = "DELETE FROM leave_request WHERE id = ? AND employee_id = ? AND status = 'PENDING'";
+        String sql = "UPDATE leave_request SET status='CANCELLED' " +
+                "WHERE id=? AND employee_id=? AND status='PENDING'";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -102,7 +118,7 @@ public class LeaveDAO {
             if (rows > 0) {
                 System.out.println("✅ Leave cancelled successfully!");
             } else {
-                System.out.println("❌ Cannot cancel leave (already approved/rejected or not found).");
+                System.out.println("❌ Cannot cancel this leave!");
             }
 
         } catch (Exception e) {
@@ -110,10 +126,10 @@ public class LeaveDAO {
         }
     }
 
-    // ================= APPROVE / REJECT LEAVE =================
+    /* ================= APPROVE / REJECT LEAVE ================= */
     public void updateLeaveStatus(int leaveId, String status, String comment) {
 
-        String sql = "UPDATE leave_request SET status = ?, manager_comment = ? WHERE id = ?";
+        String sql = "UPDATE leave_request SET status=?, manager_comment=? WHERE id=?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -122,36 +138,8 @@ public class LeaveDAO {
             ps.setString(2, comment);
             ps.setInt(3, leaveId);
 
-            int rows = ps.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("✅ Leave " + status + " successfully!");
-            } else {
-                System.out.println("❌ Leave ID not found!");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // ================= LEAVE REPORT (Admin) =================
-    public void leaveReport() {
-
-        String sql = "SELECT leave_type, COUNT(*) AS total FROM leave_request GROUP BY leave_type";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            System.out.println("\n===== LEAVE REPORT =====");
-
-            while (rs.next()) {
-                System.out.println(
-                        "Leave Type: " + rs.getString("leave_type") +
-                                " | Total Requests: " + rs.getInt("total")
-                );
-            }
+            ps.executeUpdate();
+            System.out.println("✅ Leave " + status + " successfully!");
 
         } catch (Exception e) {
             e.printStackTrace();

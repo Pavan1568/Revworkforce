@@ -11,7 +11,7 @@ public class LoginDAO {
 
     public Employee login(String email, String password) {
 
-        String sql = "SELECT * FROM employee WHERE email = ? AND password = ?";
+        String sql = "SELECT * FROM employee WHERE email=? AND password=? AND status='ACTIVE'";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -22,7 +22,6 @@ public class LoginDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-
                 return new Employee(
                         rs.getInt("id"),
                         rs.getString("name"),
@@ -43,7 +42,6 @@ public class LoginDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 }

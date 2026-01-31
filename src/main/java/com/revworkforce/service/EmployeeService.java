@@ -1,67 +1,59 @@
 package com.revworkforce.service;
 
 import com.revworkforce.dao.EmployeeDAO;
-import com.revworkforce.exception.EmployeeException;
 import com.revworkforce.model.Employee;
 
 public class EmployeeService {
 
-    private EmployeeDAO employeeDAO = new EmployeeDAO();
+    private final EmployeeDAO employeeDAO = new EmployeeDAO();
 
+    // ================= ADD EMPLOYEE =================
     public void addEmployee(Employee emp) {
         employeeDAO.addEmployee(emp);
         System.out.println("✅ Employee added successfully!");
     }
 
-    public void updateEmployee(Employee emp) {
-        if (!employeeDAO.updateEmployee(emp)) {
-            throw new EmployeeException("Employee not found!");
-        }
-        System.out.println("✅ Employee updated!");
+    // ================= VIEW PROFILE =================
+    public Employee viewProfile(int id) {
+        return employeeDAO.getEmployeeById(id);
     }
 
-    public void deleteEmployee(int id) {
-        if (!employeeDAO.deleteEmployee(id)) {
-            throw new EmployeeException("Employee not found!");
-        }
-        System.out.println("✅ Employee deleted!");
-    }
-
+    // ================= VIEW ALL EMPLOYEES =================
     public void viewAllEmployees() {
         employeeDAO.getAllEmployees();
     }
 
-    public Employee viewProfile(int id) {
-        Employee emp = employeeDAO.getEmployeeById(id);
-        if (emp == null) throw new EmployeeException("Employee not found!");
-        return emp;
+    // ================= UPDATE EMPLOYEE =================
+    public void updateEmployee(Employee emp) {
+        employeeDAO.updateEmployee(emp);
+        System.out.println("✅ Employee updated successfully!");
     }
 
-    public void updateProfile(int id, String phone, String address, String emergencyContact) {
-        if (!employeeDAO.updateProfile(id, phone, address, emergencyContact)) {
-            throw new EmployeeException("Profile update failed!");
-        }
-        System.out.println("✅ Profile updated!");
-    }
-
-    public void changePassword(int id, String oldPass, String newPass) {
-        if (!employeeDAO.changePassword(id, oldPass, newPass)) {
-            throw new EmployeeException("Old password incorrect!");
-        }
-        System.out.println("✅ Password changed!");
-    }
-
+    // ================= ASSIGN MANAGER =================
     public void assignManagerToEmployee(int employeeId, int managerId) {
         employeeDAO.assignManager(employeeId, managerId);
-        System.out.println("✅ Manager assigned!");
+        System.out.println("✅ Manager assigned successfully!");
     }
 
-    public void viewTeamMembers(int managerId) {
-        employeeDAO.getEmployeesByManager(managerId);
-    }
-
-    // ✅ THIS IS THE METHOD YOUR ERROR IS ABOUT
+    // ================= SEARCH EMPLOYEE =================
     public void searchEmployee(String keyword) {
         employeeDAO.searchEmployee(keyword);
+    }
+
+    // ================= VIEW LEAVE BALANCE (THIS WAS MISSING) =================
+    public void viewLeaveBalance(int employeeId) {
+        employeeDAO.viewLeaveBalance(employeeId);
+    }
+
+    // ================= DEACTIVATE EMPLOYEE =================
+    public void deactivateEmployee(int employeeId) {
+        employeeDAO.deactivateEmployee(employeeId);
+        System.out.println("✅ Employee deactivated successfully!");
+    }
+
+    // ================= ACTIVATE EMPLOYEE =================
+    public void activateEmployee(int employeeId) {
+        employeeDAO.activateEmployee(employeeId);
+        System.out.println("✅ Employee activated successfully!");
     }
 }

@@ -6,7 +6,6 @@ import com.revworkforce.service.EmployeeService;
 import com.revworkforce.service.LeaveService;
 import com.revworkforce.service.LoginService;
 import com.revworkforce.service.ManagerService;
-import com.revworkforce.service.NotificationService;
 
 import java.sql.Date;
 import java.util.Scanner;
@@ -21,7 +20,6 @@ public class Main {
         EmployeeService employeeService = new EmployeeService();
         LeaveService leaveService = new LeaveService();
         ManagerService managerService = new ManagerService();
-        NotificationService notificationService = new NotificationService();
 
         System.out.println("===== REVWORKFORCE LOGIN =====");
 
@@ -37,6 +35,7 @@ public class Main {
             loggedInUser = loginService.authenticate(email, password);
         } catch (Exception e) {
             System.out.println("❌ Invalid email or password!");
+            sc.close();
             return;
         }
 
@@ -45,19 +44,15 @@ public class Main {
 
         String role = loggedInUser.getRole();
 
-        // ================= EMPLOYEE MENU =================
+        /* ================= EMPLOYEE MENU ================= */
         if (role.equalsIgnoreCase("EMPLOYEE")) {
 
             while (true) {
                 System.out.println("\n===== EMPLOYEE MENU =====");
                 System.out.println("1. View Profile");
-                System.out.println("2. Edit Profile");
-                System.out.println("3. Apply Leave");
-                System.out.println("4. View My Leave History");
-                System.out.println("5. Cancel Leave");
-                System.out.println("6. View Notifications");
-                System.out.println("7. Change Password");
-                System.out.println("8. Exit");
+                System.out.println("2. Apply Leave");
+                System.out.println("3. View Leave Balance");
+                System.out.println("4. Exit");
                 System.out.print("Choose option: ");
 
                 int choice = sc.nextInt();
@@ -65,44 +60,26 @@ public class Main {
 
                 if (choice == 1) {
                     Employee emp = employeeService.viewProfile(loggedInUser.getId());
-
-                    System.out.println("\n===== EMPLOYEE PROFILE =====");
-                    System.out.println("ID      : " + emp.getId());
-                    System.out.println("Name    : " + emp.getName());
-                    System.out.println("Email   : " + emp.getEmail());
-                    System.out.println("Role    : " + emp.getRole());
-                    System.out.println("Salary  : " + emp.getSalary());
-                    System.out.println("Manager : " + emp.getManagerId());
-                    System.out.println("Phone   : " + emp.getPhone());
-                    System.out.println("Address : " + emp.getAddress());
-                    System.out.println("Emergency Contact : " + emp.getEmergencyContact());
-                    System.out.println("Casual Leave: " + emp.getCasualLeave());
-                    System.out.println("Sick Leave  : " + emp.getSickLeave());
-                    System.out.println("Paid Leave  : " + emp.getPaidLeave());
+                    if (emp != null) {
+                        System.out.println("\n===== PROFILE =====");
+                        System.out.println("ID      : " + emp.getId());
+                        System.out.println("Name    : " + emp.getName());
+                        System.out.println("Email   : " + emp.getEmail());
+                        System.out.println("Role    : " + emp.getRole());
+                        System.out.println("Salary  : " + emp.getSalary());
+                        System.out.println("Manager : " + emp.getManagerId());
+                    }
                 }
 
                 else if (choice == 2) {
-                    System.out.print("Enter new phone: ");
-                    String phone = sc.nextLine();
-
-                    System.out.print("Enter new address: ");
-                    String address = sc.nextLine();
-
-                    System.out.print("Enter emergency contact: ");
-                    String emergency = sc.nextLine();
-
-                    employeeService.updateProfile(loggedInUser.getId(), phone, address, emergency);
-                }
-
-                else if (choice == 3) {
                     System.out.print("Leave Type (CASUAL / SICK / PAID): ");
                     String type = sc.nextLine();
 
                     System.out.print("Start Date (yyyy-mm-dd): ");
-                    String start = sc.nextLine();
+                    Date start = Date.valueOf(sc.nextLine());
 
                     System.out.print("End Date (yyyy-mm-dd): ");
-                    String end = sc.nextLine();
+                    Date end = Date.valueOf(sc.nextLine());
 
                     System.out.print("Reason: ");
                     String reason = sc.nextLine();
@@ -111,8 +88,8 @@ public class Main {
                             0,
                             loggedInUser.getId(),
                             type,
-                            Date.valueOf(start),
-                            Date.valueOf(end),
+                            start,
+                            end,
                             reason,
                             "PENDING",
                             null
@@ -121,50 +98,28 @@ public class Main {
                     leaveService.applyLeave(leave);
                 }
 
+                else if (choice == 3) {
+                    employeeService.viewLeaveBalance(loggedInUser.getId());
+                }
+
                 else if (choice == 4) {
-                    leaveService.viewMyLeaves(loggedInUser.getId());
-                }
-
-                else if (choice == 5) {
-                    System.out.print("Enter Leave ID to cancel: ");
-                    int leaveId = sc.nextInt();
-                    sc.nextLine();
-
-                    leaveService.cancelLeave(leaveId, loggedInUser.getId());
-                }
-
-                else if (choice == 6) {
-                    notificationService.viewNotifications(loggedInUser.getId());
-                }
-
-                else if (choice == 7) {
-                    System.out.print("Enter old password: ");
-                    String oldPass = sc.nextLine();
-
-                    System.out.print("Enter new password: ");
-                    String newPass = sc.nextLine();
-
-                    employeeService.changePassword(loggedInUser.getId(), oldPass, newPass);
-                }
-
-                else if (choice == 8) {
                     break;
                 }
 
                 else {
-                    System.out.println("❌ Invalid choice!");
+                    System.out.println("❌ Invalid option!");
                 }
             }
         }
 
-        // ================= MANAGER MENU =================
+        /* ================= MANAGER MENU ================= */
         else if (role.equalsIgnoreCase("MANAGER")) {
 
             while (true) {
                 System.out.println("\n===== MANAGER MENU =====");
-                System.out.println("1. View Leave Requests");
-                System.out.println("2. Approve / Reject Leave");
-                System.out.println("3. View Team Members");
+                System.out.println("1. View Team Members");
+                System.out.println("2. View All Leave Requests");
+                System.out.println("3. Approve / Reject Leave");
                 System.out.println("4. Exit");
                 System.out.print("Choose option: ");
 
@@ -172,11 +127,15 @@ public class Main {
                 sc.nextLine();
 
                 if (choice == 1) {
-                    managerService.viewAllLeaves();
+                    managerService.viewTeamMembers(loggedInUser.getId());
                 }
 
                 else if (choice == 2) {
-                    System.out.print("Enter Leave ID: ");
+                    managerService.viewAllLeaves();
+                }
+
+                else if (choice == 3) {
+                    System.out.print("Leave ID: ");
                     int leaveId = sc.nextInt();
                     sc.nextLine();
 
@@ -189,21 +148,17 @@ public class Main {
                     managerService.approveOrRejectLeave(leaveId, status, comment);
                 }
 
-                else if (choice == 3) {
-                    managerService.viewTeamMembers(loggedInUser.getId());
-                }
-
                 else if (choice == 4) {
                     break;
                 }
 
                 else {
-                    System.out.println("❌ Invalid choice!");
+                    System.out.println("❌ Invalid option!");
                 }
             }
         }
 
-        // ================= ADMIN MENU =================
+        /* ================= ADMIN MENU (RESTORED FULL) ================= */
         else if (role.equalsIgnoreCase("ADMIN")) {
 
             while (true) {
@@ -211,10 +166,11 @@ public class Main {
                 System.out.println("1. Add Employee");
                 System.out.println("2. View All Employees");
                 System.out.println("3. Assign Manager");
-                System.out.println("4. Update Employee");
-                System.out.println("5. Delete Employee");
-                System.out.println("6. Search Employee");
-                System.out.println("7. Exit");
+                System.out.println("4. Search Employee");
+                System.out.println("5. Update Employee");
+                System.out.println("6. Deactivate Employee");
+                System.out.println("7. Activate Employee");
+                System.out.println("8. Exit");
                 System.out.print("Choose option: ");
 
                 int choice = sc.nextInt();
@@ -244,8 +200,6 @@ public class Main {
                     System.out.print("Password: ");
                     String empPassword = sc.nextLine();
 
-                    int cl = 10, sl = 10, pl = 10;
-
                     Employee emp = new Employee(
                             0,
                             name,
@@ -254,9 +208,7 @@ public class Main {
                             salary,
                             managerId,
                             empPassword,
-                            cl,
-                            sl,
-                            pl
+                            10, 10, 10
                     );
 
                     employeeService.addEmployee(emp);
@@ -267,11 +219,11 @@ public class Main {
                 }
 
                 else if (choice == 3) {
-                    System.out.print("Enter Employee ID: ");
+                    System.out.print("Employee ID: ");
                     int empId = sc.nextInt();
                     sc.nextLine();
 
-                    System.out.print("Enter Manager ID: ");
+                    System.out.print("Manager ID: ");
                     int managerId = sc.nextInt();
                     sc.nextLine();
 
@@ -279,71 +231,69 @@ public class Main {
                 }
 
                 else if (choice == 4) {
-                    System.out.print("Enter Employee ID to update: ");
-                    int id = sc.nextInt();
-                    sc.nextLine();
-
-                    System.out.print("New Name: ");
-                    String name = sc.nextLine();
-
-                    System.out.print("New Email: ");
-                    String emailNew = sc.nextLine();
-
-                    System.out.print("New Role (EMPLOYEE / MANAGER / ADMIN): ");
-                    String roleNew = sc.nextLine();
-
-                    System.out.print("New Salary: ");
-                    double salaryNew = sc.nextDouble();
-                    sc.nextLine();
-
-                    System.out.print("New Manager ID (0 if none): ");
-                    int midNew = sc.nextInt();
-                    sc.nextLine();
-
-                    Integer managerIdNew = (midNew == 0) ? null : midNew;
-
-                    Employee updatedEmp = new Employee(
-                            id,
-                            name,
-                            emailNew,
-                            roleNew,
-                            salaryNew,
-                            managerIdNew,
-                            "dummy",
-                            10,
-                            10,
-                            10
-                    );
-
-                    employeeService.updateEmployee(updatedEmp);
-                }
-
-                else if (choice == 5) {
-                    System.out.print("Enter Employee ID to delete: ");
-                    int id = sc.nextInt();
-                    sc.nextLine();
-
-                    employeeService.deleteEmployee(id);
-                }
-
-                else if (choice == 6) {
-                    System.out.print("Enter name/email/id to search: ");
+                    System.out.print("Enter name/email/id: ");
                     String keyword = sc.nextLine();
                     employeeService.searchEmployee(keyword);
                 }
 
+                else if (choice == 5) {
+
+                    System.out.print("Employee ID to update: ");
+                    int id = sc.nextInt();
+                    sc.nextLine();
+
+                    Employee existing = employeeService.viewProfile(id);
+                    if (existing == null) {
+                        System.out.println("❌ Employee not found!");
+                        continue;
+                    }
+
+                    System.out.print("New Name (" + existing.getName() + "): ");
+                    String name = sc.nextLine();
+                    if (name.isEmpty()) name = existing.getName();
+
+                    Employee updated = new Employee(
+                            id,
+                            name,
+                            existing.getEmail(),
+                            existing.getRole(),
+                            existing.getSalary(),
+                            existing.getManagerId(),
+                            existing.getPassword(),
+                            existing.getCasualLeave(),
+                            existing.getSickLeave(),
+                            existing.getPaidLeave()
+                    );
+
+                    employeeService.updateEmployee(updated);
+                }
+
+                else if (choice == 6) {
+                    System.out.print("Employee ID to deactivate: ");
+                    int empId = sc.nextInt();
+                    sc.nextLine();
+                    employeeService.deactivateEmployee(empId);
+                }
+
                 else if (choice == 7) {
+                    System.out.print("Employee ID to activate: ");
+                    int empId = sc.nextInt();
+                    sc.nextLine();
+                    employeeService.activateEmployee(empId);
+                }
+
+                else if (choice == 8) {
                     break;
                 }
 
                 else {
-                    System.out.println("❌ Invalid choice!");
+                    System.out.println("❌ Invalid option!");
                 }
             }
         }
 
         else {
-            System.out.println("❌ Unknown role: " + role);
+            System.out.println("❌ Unknown role!");
         }
 
         System.out.println("👋 Logged out. Goodbye!");

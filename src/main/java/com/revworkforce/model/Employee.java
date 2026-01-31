@@ -12,11 +12,12 @@ public class Employee {
     private int casualLeave;
     private int sickLeave;
     private int paidLeave;
+
     private String phone;
     private String address;
     private String emergencyContact;
 
-    // ✅ FULL CONSTRUCTOR (ALL FIELDS)
+    // ✅ Constructor (FULL)
     public Employee(int id, String name, String email, String role, double salary,
                     Integer managerId, String password,
                     int casualLeave, int sickLeave, int paidLeave,
@@ -37,7 +38,7 @@ public class Employee {
         this.emergencyContact = emergencyContact;
     }
 
-    // ✅ STANDARD HRM CONSTRUCTOR (MOST USED)
+    // ✅ OLD Constructor (for compatibility)
     public Employee(int id, String name, String email, String role, double salary,
                     Integer managerId, String password,
                     int casualLeave, int sickLeave, int paidLeave) {
@@ -45,14 +46,7 @@ public class Employee {
                 casualLeave, sickLeave, paidLeave, null, null, null);
     }
 
-    // ✅ SAFE MINIMAL CONSTRUCTOR (LOGIN PURPOSE)
-    public Employee(int id, String name, String email, String role, double salary,
-                    Integer managerId, String password) {
-        this(id, name, email, role, salary, managerId, password,
-                10, 10, 10, null, null, null);
-    }
-
-    // ================= GETTERS =================
+    // ===== GETTERS & SETTERS =====
 
     public int getId() { return id; }
     public String getName() { return name; }
@@ -64,11 +58,10 @@ public class Employee {
     public int getCasualLeave() { return casualLeave; }
     public int getSickLeave() { return sickLeave; }
     public int getPaidLeave() { return paidLeave; }
+
     public String getPhone() { return phone; }
     public String getAddress() { return address; }
     public String getEmergencyContact() { return emergencyContact; }
-
-    // ================= SETTERS =================
 
     public void setPhone(String phone) { this.phone = phone; }
     public void setAddress(String address) { this.address = address; }

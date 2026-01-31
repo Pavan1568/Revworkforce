@@ -11,8 +11,10 @@ public class EmployeeDAO {
 
     // ================= ADD EMPLOYEE =================
     public void addEmployee(Employee employee) {
-        String sql = "INSERT INTO employee (name, email, role, salary, manager_id, password, casual_leave, sick_leave, paid_leave) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String sql = "INSERT INTO employee " +
+                "(name, email, role, salary, manager_id, password, casual_leave, sick_leave, paid_leave, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -35,7 +37,8 @@ public class EmployeeDAO {
     }
 
     // ================= UPDATE EMPLOYEE =================
-    public boolean updateEmployee(Employee employee) {
+    public void updateEmployee(Employee employee) {
+
         String sql = "UPDATE employee SET name=?, email=?, role=?, salary=?, manager_id=? WHERE id=?";
 
         try (Connection con = DBConnection.getConnection();
@@ -48,49 +51,7 @@ public class EmployeeDAO {
             ps.setObject(5, employee.getManagerId());
             ps.setInt(6, employee.getId());
 
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // ================= DELETE EMPLOYEE =================
-    public boolean deleteEmployee(int id) {
-        String sql = "DELETE FROM employee WHERE id=?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // ================= VIEW ALL EMPLOYEES =================
-    public void getAllEmployees() {
-        String sql = "SELECT * FROM employee";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            System.out.println("\n===== ALL EMPLOYEES =====");
-
-            while (rs.next()) {
-                System.out.println(
-                        "ID: " + rs.getInt("id") +
-                                " | Name: " + rs.getString("name") +
-                                " | Email: " + rs.getString("email") +
-                                " | Role: " + rs.getString("role") +
-                                " | Salary: " + rs.getDouble("salary")
-                );
-            }
+            ps.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -99,6 +60,7 @@ public class EmployeeDAO {
 
     // ================= GET EMPLOYEE BY ID =================
     public Employee getEmployeeById(int id) {
+
         String sql = "SELECT * FROM employee WHERE id=?";
 
         try (Connection con = DBConnection.getConnection();
@@ -125,91 +87,27 @@ public class EmployeeDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
-    // ================= UPDATE PROFILE =================
-    public boolean updateProfile(int id, String phone, String address, String emergencyContact) {
-        String sql = "UPDATE employee SET phone=?, address=?, emergency_contact=? WHERE id=?";
+    // ================= VIEW ALL EMPLOYEES =================
+    public void getAllEmployees() {
+
+        String sql = "SELECT id, name, email, role, status FROM employee";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            ps.setString(1, phone);
-            ps.setString(2, address);
-            ps.setString(3, emergencyContact);
-            ps.setInt(4, id);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // ================= CHANGE PASSWORD =================
-    public boolean changePassword(int id, String oldPass, String newPass) {
-        String checkSql = "SELECT * FROM employee WHERE id=? AND password=?";
-        String updateSql = "UPDATE employee SET password=? WHERE id=?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement checkPs = con.prepareStatement(checkSql)) {
-
-            checkPs.setInt(1, id);
-            checkPs.setString(2, oldPass);
-            ResultSet rs = checkPs.executeQuery();
-
-            if (!rs.next()) return false;
-
-            try (PreparedStatement updatePs = con.prepareStatement(updateSql)) {
-                updatePs.setString(1, newPass);
-                updatePs.setInt(2, id);
-                updatePs.executeUpdate();
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // ================= ASSIGN MANAGER =================
-    public void assignManager(int employeeId, int managerId) {
-        String sql = "UPDATE employee SET manager_id=? WHERE id=?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, managerId);
-            ps.setInt(2, employeeId);
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // ================= TEAM MEMBERS =================
-    public void getEmployeesByManager(int managerId) {
-        String sql = "SELECT * FROM employee WHERE manager_id=?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, managerId);
-            ResultSet rs = ps.executeQuery();
-
-            System.out.println("\n===== TEAM MEMBERS =====");
+            System.out.println("\n===== ALL EMPLOYEES =====");
 
             while (rs.next()) {
                 System.out.println(
                         "ID: " + rs.getInt("id") +
                                 " | Name: " + rs.getString("name") +
-                                " | Email: " + rs.getString("email")
+                                " | Email: " + rs.getString("email") +
+                                " | Role: " + rs.getString("role") +
+                                " | Status: " + rs.getString("status")
                 );
             }
 
@@ -218,10 +116,11 @@ public class EmployeeDAO {
         }
     }
 
-    // ================= SEARCH EMPLOYEE ✅ (THIS FIXES YOUR ERROR) =================
+    // ================= SEARCH EMPLOYEE =================
     public void searchEmployee(String keyword) {
 
-        String sql = "SELECT * FROM employee WHERE name LIKE ? OR email LIKE ? OR id=?";
+        String sql = "SELECT id, name, email, role, status FROM employee " +
+                "WHERE name LIKE ? OR email LIKE ? OR id=?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -238,7 +137,116 @@ public class EmployeeDAO {
             ResultSet rs = ps.executeQuery();
 
             System.out.println("\n===== SEARCH RESULTS =====");
+            boolean found = false;
 
+            while (rs.next()) {
+                found = true;
+                System.out.println(
+                        "ID: " + rs.getInt("id") +
+                                " | Name: " + rs.getString("name") +
+                                " | Email: " + rs.getString("email") +
+                                " | Role: " + rs.getString("role") +
+                                " | Status: " + rs.getString("status")
+                );
+            }
+
+            if (!found) {
+                System.out.println("❌ No employee found!");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= VIEW LEAVE BALANCE =================
+    public void viewLeaveBalance(int employeeId) {
+
+        String sql = "SELECT casual_leave, sick_leave, paid_leave FROM employee WHERE id=?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, employeeId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("Casual Leave : " + rs.getInt("casual_leave"));
+                System.out.println("Sick Leave   : " + rs.getInt("sick_leave"));
+                System.out.println("Paid Leave   : " + rs.getInt("paid_leave"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= DEDUCT LEAVE BALANCE (FIX FOR LeaveDAO) =================
+    public boolean deductLeaveBalance(int employeeId, String leaveType, int days) {
+
+        String column;
+
+        switch (leaveType.toUpperCase()) {
+            case "CASUAL":
+                column = "casual_leave";
+                break;
+            case "SICK":
+                column = "sick_leave";
+                break;
+            case "PAID":
+                column = "paid_leave";
+                break;
+            default:
+                return false;
+        }
+
+        String sql = "UPDATE employee SET " + column + " = " + column + " - ? WHERE id=? AND " + column + " >= ?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, days);
+            ps.setInt(2, employeeId);
+            ps.setInt(3, days);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // ================= ASSIGN MANAGER =================
+    public void assignManager(int employeeId, int managerId) {
+
+        String sql = "UPDATE employee SET manager_id=? WHERE id=?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, managerId);
+            ps.setInt(2, employeeId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= TEAM MEMBERS =================
+    public void getEmployeesByManager(int managerId) {
+
+        String sql = "SELECT id, name, email, role FROM employee " +
+                "WHERE manager_id=? AND status='ACTIVE'";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, managerId);
+            ResultSet rs = ps.executeQuery();
+
+            System.out.println("\n===== TEAM MEMBERS =====");
             boolean found = false;
 
             while (rs.next()) {
@@ -252,8 +260,40 @@ public class EmployeeDAO {
             }
 
             if (!found) {
-                System.out.println("❌ No employee found!");
+                System.out.println("❌ No team members found!");
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= ACTIVATE EMPLOYEE =================
+    public void activateEmployee(int employeeId) {
+
+        String sql = "UPDATE employee SET status='ACTIVE' WHERE id=?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, employeeId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= DEACTIVATE EMPLOYEE =================
+    public void deactivateEmployee(int employeeId) {
+
+        String sql = "UPDATE employee SET status='INACTIVE' WHERE id=?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, employeeId);
+            ps.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
