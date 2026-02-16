@@ -260,3 +260,7 @@ The system is modular, extensible, and structured to evolve into a full-scale en
 👨‍💻 Developed As
 
 Backend Java training project demonstrating real-world HR workflow implementation using core Java technologies.
+
+👨‍💻 Author
+
+Developed as part of backend Java training project to demonstrate practical HR management workflow implementation.
